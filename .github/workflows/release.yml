@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version from manifest
+        id: manifest
+        run: echo "version=$(jq -r .version manifest.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Check tag matches manifest version
+        if: github.ref_type == 'tag'
+        run: |
+          if [ "${GITHUB_REF_NAME#v}" != "${{ steps.manifest.outputs.version }}" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match manifest version ${{ steps.manifest.outputs.version }}"
+            exit 1
+          fi
+
+      - name: Build XPI
+        id: build
+        run: |
+          xpi="run-filters-${{ steps.manifest.outputs.version }}.xpi"
+          # manifest.json must sit at the archive root.
+          zip -r -X "$xpi" manifest.json images myapi scripts LICENSE
+          echo "xpi=$xpi" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.build.outputs.xpi }}
+          path: ${{ steps.build.outputs.xpi }}
+
+      - name: Create GitHub release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "${{ steps.build.outputs.xpi }}" --title "$GITHUB_REF_NAME" --generate-notes
