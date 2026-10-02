@@ -2,13 +2,13 @@
     "manifest_version": 2,
     "name": "Run Filters from Context Menu",
     "description": "Adds context menu options to run all filters on the selected folder or set of messages.",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "author": "Yinong Wang",
     "browser_specific_settings": {
         "gecko": {
             "id": "run-filters@IsoNovio",
             "strict_min_version": "128.0",
-            "strict_max_version": "142.*"
+            "strict_max_version": "156.*"
         }
     },
     "icons": {
